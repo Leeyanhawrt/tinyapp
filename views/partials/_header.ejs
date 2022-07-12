@@ -1,22 +1,33 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-toggle="collapse"
-      data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+
+        <% if(username) {%>
+          <div class="nav-item nav-link" style="margin-left: 1250px;">
+            <p>Logged in as:</p>
+          </div>
+          <div class="nav-item nav-link">
+            <%= username %>
+          </div>
+          <form method="POST" action="/logout">
+            <button style="border-radius: 8px;">Logout</button>
+            <% } else { %>
+              <div class="nav-item nav-link" style="margin-left: 1150px;">
+                <form method="Post" action="/login">
+                  <input class="form-control" type="text" placeholder="Username" name="username" />
+              </div>
+              <button style="border-radius: 8px">Login</button>
+
       </div>
+      <% } %>
     </div>
   </nav>
 </header>
