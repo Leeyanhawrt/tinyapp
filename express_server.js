@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8081; // default port 8080
+const PORT = 8082; // default port 8080
 const cookieParser = require('cookie-parser');
 const { restart } = require("nodemon");
 
@@ -10,8 +10,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+
 };
 
 const users = {
@@ -65,15 +64,23 @@ app.get("/hello", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.redirect("/login")
+  }
+
   const templateVars = { username: users[req.cookies["user_id"]] }
   res.render("urls_new", templateVars);
 })
 
 
 app.post("/urls", (req, res) => {
-  res.sendStatus(200)
+  if (!req.cookies["user_id"]) {
+    return res.sendStatus(404);
+  }
+
   const randomKey = generateRandomString()
-  urlDatabase[randomKey] = req.body.longURL
+  urlDatabase[randomKey] = { longURL: req.body.longURL, userID: req.cookies["user_id"] }
+  console.log(urlDatabase)
   res.redirect(`/urls/${randomKey}`)
 });
 
@@ -93,17 +100,25 @@ app.post("/login", (req, res) => {
 })
 
 app.get("/register", (req, res) => {
+  if (req.cookies["user_id"]) {
+    return res.redirect("/urls")
+  }
+
   const templateVars = { username: users[req.cookies["user_id"]] }
   res.render("urls_register", templateVars);
 })
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: users[req.cookies["user_id"]] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, username: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]
+  if (!urlDatabase[req.params.id].longURL) {
+    return res.send("That short URL does not exist")
+  }
+
+  const longURL = urlDatabase[req.params.id].longURL
   res.redirect(longURL);
 });
 
