@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8081; // default port 8080
 const cookieParser = require('cookie-parser');
+const { restart } = require("nodemon");
 
 app.set("view engine", "ejs");
 
@@ -13,6 +14,39 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+app.post("/register", (req, res) => {
+  randomID = generateRandomString();
+  if (req.body.password === "" || req.body.email === "" || checkIfEmailExists(req.body.email)) {
+    res.sendStatus(400)
+  } else {
+    users[`${randomID}`] = {
+      id: randomID,
+      email: req.body.email,
+      password: req.body.password
+    }
+    res.cookie("user_id", randomID);
+    res.redirect("/urls");
+  }
+})
+
+app.get("/login", (req, res) => {
+  const templateVars = { username: users[req.cookies["user_id"]] }
+  res.render("urls_login", templateVars)
+})
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -22,7 +56,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] }
+  const templateVars = { urls: urlDatabase, username: users[req.cookies["user_id"]] }
   res.render("urls_index", templateVars)
 })
 
@@ -31,36 +65,48 @@ app.get("/hello", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  const templateVars = { username: users[req.cookies["user_id"]] }
   res.render("urls_new", templateVars);
 })
+
+
+app.post("/urls", (req, res) => {
+  res.sendStatus(200)
+  const randomKey = generateRandomString()
+  urlDatabase[randomKey] = req.body.longURL
+  res.redirect(`/urls/${randomKey}`)
+});
+
+app.post("/login", (req, res) => {
+  const emailExists = checkIfEmailExists(req.body.login)
+  if (!emailExists) {
+    return res.sendStatus(403)
+  }
+  if (emailExists) {
+    if (req.body.password === users[emailExists].password) {
+      res.cookie("user_id", users[emailExists].id)
+      return res.redirect("/urls")
+    }
+  }
+
+  return res.sendStatus(403)
+})
+
+app.get("/register", (req, res) => {
+  const templateVars = { username: users[req.cookies["user_id"]] }
+  res.render("urls_register", templateVars);
+})
+
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: users[req.cookies["user_id"]] };
+  res.render("urls_show", templateVars);
+});
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]
   res.redirect(longURL);
 });
 
-app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"] };
-  res.render("urls_show", templateVars);
-});
-
-app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username)
-  res.redirect("/urls")
-})
-
-app.post("/urls", (req, res) => {
-  res.status(200)
-  const randomKey = generateRandomString()
-  urlDatabase[randomKey] = req.body.longURL
-  res.redirect(`/urls/${randomKey}`)
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie("username")
-  res.redirect("/urls")
-});
 
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL
@@ -69,6 +115,11 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
+  res.redirect("/urls")
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id")
   res.redirect("/urls")
 });
 
@@ -83,4 +134,13 @@ const generateRandomString = () => {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result
+}
+
+const checkIfEmailExists = (email) => {
+  for (const user in users) {
+    if (users[user]["email"] === email) {
+      return user;
+    }
+  }
+  return null;
 }
