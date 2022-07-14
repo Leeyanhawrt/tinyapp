@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8082; // default port 8080
 const cookieParser = require('cookie-parser');
 const { restart } = require("nodemon");
+const bcrypt = require('bcryptjs');
+
 
 app.set("view engine", "ejs");
 
@@ -36,7 +38,7 @@ app.post("/register", (req, res) => {
     users[`${randomID}`] = {
       id: randomID,
       email: req.body.email,
-      password: req.body.password
+      hashedPassword: bcrypt.hashSync(req.body.password, 10)
     }
     res.cookie("user_id", randomID);
     res.redirect("/urls");
@@ -96,7 +98,7 @@ app.post("/login", (req, res) => {
     return res.sendStatus(403)
   }
   if (emailExists) {
-    if (req.body.password === users[emailExists].password) {
+    if (bcrypt.compareSync(req.body.password, users[emailExists].hashedPassword)) {
       res.cookie("user_id", users[emailExists].id)
       return res.redirect("/urls")
     }
@@ -205,3 +207,4 @@ const urlsForUser = (database, id) => {
   }
   return obj
 }
+
