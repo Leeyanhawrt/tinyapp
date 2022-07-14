@@ -1,7 +1,7 @@
 const express = require('express')
 const { checkIfEmailExists, urlsForUser, generateRandomString } = require('./helpers')
 const app = express()
-const PORT = 8082 // default port 8080
+const PORT = 8080 // default port 8080
 const bcrypt = require('bcryptjs')
 const cookieSession = require('cookie-session')
 const methodOverride = require('method-override')
