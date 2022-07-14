@@ -19,8 +19,6 @@ app.use(express.urlencoded({ extended: true }))
 const urlDatabase = {}
 const users = {}
 
-app.use(methodOverride('X-HTTP-Method-Override'))
-
 ///////////////////////////////////////////////////////////////////////////////////
 //POST REGISTER, CHECKS TO SEE IF EMAIL ALREADY EXISTS IF NOT CREATE A NEW ACCOUNT
 ///////////////////////////////////////////////////////////////////////////////////
