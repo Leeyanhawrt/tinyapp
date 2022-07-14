@@ -28,16 +28,21 @@
           <% for (let id in urls) { %>
             <tr>
               <td>
-                <%= id %>
+                <a href="<%=urls[id]%>"> <%=id %>
+                </a>
               </td>
               <td>
                 <%= urls[id]%>
               </td>
               <form method="GET" action="/urls/<%= id %>">
-                <td><button style="background-color:white;border-color: dodgerblue; color: dodgerblue; border-radius: 8px; height: 40px; width: 90px;">Edit</button></td>
+                <td><button
+                    style="background-color:white;border-color: dodgerblue; color: dodgerblue; border-radius: 8px; height: 40px; width: 90px;">Edit</button>
+                </td>
               </form>
               <form method="POST" action="/urls/<%= id %>/delete">
-                <td><button style="background-color:white;border-color: red; color: red; border-radius: 8px; height: 40px; width: 90px;">Delete</button></td>
+                <td><button
+                    style="background-color:white;border-color: red; color: red; border-radius: 8px; height: 40px; width: 90px;">Delete</button>
+                </td>
               </form>
             </tr>
             <% } %>
