@@ -10,7 +10,9 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-
+  K3cKsG: { longURL: 'https://www.google.com', userID: 'a59Hco' },
+  K3cKsE: { longURL: 'https://www.google.com', userID: 'a59Hco' },
+  K3cKsC: { longURL: 'https://www.google.com', userID: 'a59Hco' }
 };
 
 const users = {
@@ -55,7 +57,12 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: users[req.cookies["user_id"]] }
+  if (!req.cookies["user_id"]) {
+    return res.redirect("/login")
+  }
+
+  const usersLinks = urlsForUser(urlDatabase, req.cookies["user_id"])
+  const templateVars = { urls: usersLinks, username: users[req.cookies["user_id"]] }
   res.render("urls_index", templateVars)
 })
 
@@ -80,7 +87,6 @@ app.post("/urls", (req, res) => {
 
   const randomKey = generateRandomString()
   urlDatabase[randomKey] = { longURL: req.body.longURL, userID: req.cookies["user_id"] }
-  console.log(urlDatabase)
   res.redirect(`/urls/${randomKey}`)
 });
 
@@ -109,6 +115,10 @@ app.get("/register", (req, res) => {
 })
 
 app.get("/urls/:id", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.send("You are not logged in and can not view these urls")
+  }
+
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, username: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
 });
@@ -124,13 +134,39 @@ app.get("/u/:id", (req, res) => {
 
 
 app.post("/urls/:id", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("You are not authorized to do this action please log in first")
+  }
+
+  if (!Object.keys(urlDatabase).includes(req.params.id)) {
+    return res.send("The requested ID does not exist")
+  }
+
+  const ownedUrls = urlsForUser(urlDatabase, req.cookies["user_id"])
+  if (!ownedUrls.includes(req.params.id)) {
+    return res.send("You do not own this URL!")
+  }
+
   urlDatabase[req.params.id] = req.body.longURL
-  res.redirect("/urls")
+  return res.redirect("/urls")
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("You are not authorized to do this action please log in first")
+  }
+
+  if (!Object.keys(urlDatabase).includes(req.params.id)) {
+    return res.send("The requested ID does not exist")
+  }
+
+  const ownedUrls = urlsForUser(urlDatabase, req.cookies["user_id"])
+  if (!Object.keys(ownedUrls).includes(req.params.id)) {
+    return res.send("You do not own this URL!")
+  }
+
   delete urlDatabase[req.params.id];
-  res.redirect("/urls")
+  return res.redirect("/urls")
 });
 
 app.post("/logout", (req, res) => {
@@ -158,4 +194,14 @@ const checkIfEmailExists = (email) => {
     }
   }
   return null;
+}
+
+const urlsForUser = (database, id) => {
+  const obj = {}
+  for (const user in database) {
+    if (database[user].userID === id) {
+      obj[user] = database[user].longURL
+    }
+  }
+  return obj
 }
