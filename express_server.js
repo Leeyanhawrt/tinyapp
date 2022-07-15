@@ -1,7 +1,7 @@
 const express = require('express')
 const { checkIfEmailExists, urlsForUser, generateRandomString } = require('./helpers')
 const app = express()
-const PORT = 8080 // default port 8080
+const PORT = 8082 // default port 8080
 const bcrypt = require('bcryptjs')
 const cookieSession = require('cookie-session')
 const methodOverride = require('method-override')
@@ -86,6 +86,7 @@ app.post('/urls', (req, res) => {
     longURL: req.body.longURL,
     userID: req.session.user_id
   }
+  console.log(urlDatabase)
   return res.redirect(`/urls/${randomKey}`)
 })
 
@@ -152,7 +153,12 @@ app.post('/urls/:id', (req, res) => {
     return res.send('You do not own this URL!')
   }
 
-  urlDatabase[req.params.id] = req.body.longURL
+  urlDatabase[req.params.id] = {
+    longURL: req.body.longURL,
+    userID: req.session.user_id
+  }
+
+  console.log(urlDatabase)
   return res.redirect('/urls')
 })
 
@@ -194,4 +200,3 @@ app.post('/logout', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 })
-
